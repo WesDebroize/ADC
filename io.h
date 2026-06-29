@@ -4,5 +4,5 @@
 
 #ifndef ADC_IO_H
 #define ADC_IO_H
-
+#include <stdio.h>
 #endif //ADC_IO_H

@@ -6,7 +6,7 @@
 #define ADC_ADC_H
 #include <stdint.h> //used for setting valuable memory sizes with uint_t
 //Defining Header struct
-typedef struct {
+typedef struct __attribute__((packed)){
     uint32_t magic;             //4 bytes   0xADC1BEEF — validate this first
     uint16_t version;           //2 bytes   Always 1
     uint16_t channel_count;     //2 bytes   Always 4
@@ -16,7 +16,7 @@ typedef struct {
 } header;                       //24 bytes total
 
 //Defining ADCSample struct
-typedef struct {
+typedef struct __attribute__((packed)) {
     float timestamp;            //4 bytes   Seconds from start
     uint8_t channel_id;         //1 byte    ch no. = 0,1,2,3
     uint16_t raw_value;         //2 bytes   rng = 0-4095 (12-bit)
@@ -25,4 +25,5 @@ typedef struct {
     uint32_t sequence_number;   //4 bytes   Increments each record
     uint8_t reserved[2];        //2 bytes   Read + discard
 } ADCsample_data;               //16 bytes total
+
 #endif //ADC_ADC_H
