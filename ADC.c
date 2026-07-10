@@ -10,6 +10,11 @@
 
 #define VREF 3.3
 
-
-//void voltage_conversion(ADC_data *sample, uint32_t Record_count) {}
+//Raw_value to voltage conversion
+void voltage_conversion(ADCSample *sample, uint32_t Record_count) {
+    for (uint32_t i = 0; i < Record_count; i++) {
+        sample->voltage = (sample->raw_value/ 4095.0) * VREF;
+        sample++;
+    }
+}
 

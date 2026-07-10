@@ -40,11 +40,9 @@ int header_checker(const char filename[], File_header *header) {
 //Allocate memory (malloc) and load records
 
 ADCSample *load_records(FILE *data_file, uint32_t record_count) {
-    //declared variables now in function so not global functions
-    uint32_t i;
-    ADCSample *samples;
+
     //Size of *samples = size of one ADCSample (16 bytes)
-    samples = malloc(record_count * sizeof(*samples)); //4000 * 16 = 64000
+    ADCSample *samples = malloc(record_count * sizeof(*samples)); //4000 * 16 = 64000
 
     if (samples == NULL) {
         printf("Couldnt allocate memory for record_count\n");
@@ -53,8 +51,11 @@ ADCSample *load_records(FILE *data_file, uint32_t record_count) {
 
     //Temporary struct used to read one 16 byte record from the binary file
     ADCBinaryRecords binary_record;
+    //Pointer to ADCsample
+    ADCSample *sample = samples;
 
-    for (i = 0; i < record_count; i++) {
+
+    for (uint32_t i = 0; i < record_count; i++) {
         if (fread(&binary_record, sizeof(binary_record), 1, data_file) != 1) {
             //Reads one 16 byte record from the binary file into binary_record
 
@@ -62,6 +63,17 @@ ADCSample *load_records(FILE *data_file, uint32_t record_count) {
             free(samples); //freeing memory before exit
             return NULL;
         }
+
+        //Copying info from ADCBinaryRecords struct to the ADCSample struct
+        sample->timestamp = binary_record.timestamp;
+        sample->channel_id = binary_record.channel_id;
+        sample->raw_value = binary_record.raw_value;
+        sample->temperature = binary_record.temperature;
+        sample->status_flags = binary_record.status_flags;
+        sample->sequence_number = binary_record.sequence_number;
+
+        sample++;
+
     }
     return samples;
 }

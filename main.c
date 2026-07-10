@@ -6,13 +6,6 @@
 
 int main(void){
     FILE *data_file = fopen("adc_sensor_log.bin", "rb");
-    /*test to see why file cant be opened
-    if (data_file == NULL) {
-        perror("couldnt open file");
-        return 0;
-    }
-    */
-   // printf("Size of ADCSample: %zu bytes\n", sizeof(io_header)); - used to check size of both headers
     File_header header; //Variable to store the 24-byte file header
     //Calls header_checker function from io.c
    if (header_checker("adc_sensor_log.bin", &header) == 0) {
@@ -28,7 +21,8 @@ int main(void){
     printf("Sample rate: %uhz\n", header.Sample_rate);
     printf("Size of header: %zu bytes\n", sizeof(header));
 
-
+    //Moves the file reading to start of the ADC records, from header to the first record
+    fseek(data_file, sizeof(File_header), SEEK_SET);
 
     ADCSample *samples = load_records(data_file, header.Record_count);
     if (samples == NULL) {
@@ -37,6 +31,14 @@ int main(void){
         return 0;
     }
     printf("ADC records loaded successfully\n");
+
+    //Raw value to voltage function
+    voltage_conversion(samples, header.Record_count);
+
+    for (int i = 0; i < 5; i++) {
+        printf("Voltage %d = %f\n", i+1, samples[i].voltage);
+    }
+
     fclose(data_file);
     free(samples);
     return 1;
