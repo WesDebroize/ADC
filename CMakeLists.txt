@@ -7,5 +7,6 @@ add_executable(ADC main.c
         ADC.h
         io.h
         stats.h
-        ADC.cpp
-        io.cpp)
+        ADC.c
+        io.c
+        stats.c)

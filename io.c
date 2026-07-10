@@ -39,25 +39,27 @@ int header_checker(const char filename[], File_header *header) {
 
 //Allocate memory (malloc) and load records
 
-uint32_t i;
-ADCSample *samples;
-
 ADCSample *load_records(FILE *data_file, uint32_t record_count) {
-    samples = malloc(record_count * sizeof(ADCSample)); //4000 * 16 = 64000
+    //declared variables now in function so not global functions
+    uint32_t i;
+    ADCSample *samples;
+    //Size of *samples = size of one ADCSample (16 bytes)
+    samples = malloc(record_count * sizeof(*samples)); //4000 * 16 = 64000
 
     if (samples == NULL) {
         printf("Couldnt allocate memory for record_count\n");
         return NULL;
     }
+
+    //Temporary struct used to read one 16 byte record from the binary file
+    ADCBinaryRecords binary_record;
+
     for (i = 0; i < record_count; i++) {
-        if (fread(&samples[i], sizeof(ADCSample), 1, data_file) != 1) {
-            /*Reads one line from the ADC file (the size of ADCSample is 16 bytes)
-             *and stores it in samples[i]
-             *
-             *Should range from samples[0] to samples[3999] - 4000 total
-             */
-            printf("Couldnt read ADCSample\n");
-            free(samples);
+        if (fread(&binary_record, sizeof(binary_record), 1, data_file) != 1) {
+            //Reads one 16 byte record from the binary file into binary_record
+
+            printf("Couldnt read binary_record\n");
+            free(samples); //freeing memory before exit
             return NULL;
         }
     }
