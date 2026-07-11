@@ -3,6 +3,8 @@
 
 #include "ADC.h"
 #include "io.h"
+#include "stats.h"
+
 
 int main(void){
     FILE *data_file = fopen("adc_sensor_log.bin", "rb");
@@ -35,8 +37,18 @@ int main(void){
     //Raw value to voltage function
     voltage_conversion(samples, header.Record_count);
 
-    for (int i = 0; i < 5; i++) {
-        printf("Voltage %d = %f\n", i+1, samples[i].voltage);
+    //
+    Channel_stats stats;
+    for (int channel = 0; channel < header.Channel_count; channel++)
+    {
+        Compute_channel_stats(samples, header.Record_count, channel, &stats);
+
+        printf("\nChannel %u\n", channel);
+        printf("Mean voltage:       %f\n", stats.mean_voltage);
+        printf("Minimum voltage:    %f\n", stats.minimum);
+        printf("Maximum voltage:    %f\n", stats.maximum);
+        printf("RMS voltage:        %f\n", stats.rms);
+        printf("Standard deviation: %f\n", stats.standard_deviation);
     }
 
     fclose(data_file);
