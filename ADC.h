@@ -51,4 +51,12 @@ typedef struct {
 
 void Detect_channel_faults(ADCSample *samples, uint32_t record_count, uint8_t channel_id, Fault_counts *faults);
 
+typedef struct {
+    uint32_t last_sequence;
+    uint32_t current_sequence;
+    uint32_t missing_count;
+} Sequence_issue;
+
+uint32_t Check_sampling_integrity(ADCSample *samples,uint32_t record_count,Sequence_issue *issues);
+
 #endif //ADC_ADC_H

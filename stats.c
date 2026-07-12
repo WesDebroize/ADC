@@ -42,7 +42,7 @@ double Compute_minimum_voltage(ADCSample *samples, uint32_t record_count, uint8_
     double minimum;
     uint32_t channel_count = 0;
 
-    for (int i = 0; i < record_count; i++) {
+    for (uint32_t i = 0; i < record_count; i++) {
         if (sample->channel_id == channel_id) {
             if (channel_count == 0) {
                 minimum = sample->voltage;

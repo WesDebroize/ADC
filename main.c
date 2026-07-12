@@ -63,6 +63,37 @@ int main(void){
         printf("Total faults:        %u\n", faults.total_fault_count);
     }
 
+    Sequence_issue *sequence_issues = malloc(header.Record_count * sizeof(*sequence_issues));
+    uint32_t sequence_issue_count = Check_sampling_integrity(samples,header.Record_count, sequence_issues);
+
+    uint32_t gap_count = 0;
+    uint32_t missing_record_count = 0;
+    uint32_t out_of_order_count = 0;
+
+    Sequence_issue *issue = sequence_issues;
+
+    for (uint32_t i = 0; i < sequence_issue_count; i++) {
+        if (issue->missing_count > 0) {
+
+            printf("Gap between sequence %u and %u: %u records missing\n", issue->last_sequence,
+                   issue->current_sequence,
+                   issue->missing_count);
+            gap_count++;
+            missing_record_count += issue->missing_count;
+        }
+        else {
+            printf("Out-of-order sequence: %u followed by %u\n", issue->last_sequence, issue->current_sequence);
+            out_of_order_count++;
+        }
+        issue++;
+    }
+    if (sequence_issue_count == 0) {
+        printf("No sequence number problems found\n");
+    }
+    printf("Sequence gaps:        %u\n", gap_count);
+    printf("Missing records:      %u\n", missing_record_count);
+    printf("Out-of-order records: %u\n", out_of_order_count);
+
     fclose(data_file);
     free(samples);
     return 1;
