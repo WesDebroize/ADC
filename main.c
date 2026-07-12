@@ -3,17 +3,18 @@
 
 #include "ADC.h"
 #include "io.h"
-#include "stats.h"
+
 
 
 int main(void){
     FILE *data_file = fopen("adc_sensor_log.bin", "rb");
     File_header header; //Variable to store the 24-byte file header
+
     //Calls header_checker function from io.c
    if (header_checker("adc_sensor_log.bin", &header) == 0) {
        printf("Header validation failed\n");
        fclose(data_file);
-       return 0;
+       return EXIT_FAILURE;
    }
     //printing header to check all info and size is correct
     printf("Magic no.: %x\n", header.Magic_number);
@@ -37,10 +38,8 @@ int main(void){
     //Raw value to voltage function
     voltage_conversion(samples, header.Record_count);
 
-    //
     Channel_stats stats;
-    for (int channel = 0; channel < header.Channel_count; channel++)
-    {
+    for (int channel = 0; channel < header.Channel_count; channel++) {
         Compute_channel_stats(samples, header.Record_count, channel, &stats);
 
         printf("\nChannel %u\n", channel);
@@ -49,6 +48,19 @@ int main(void){
         printf("Maximum voltage:    %f\n", stats.maximum);
         printf("RMS voltage:        %f\n", stats.rms);
         printf("Standard deviation: %f\n", stats.standard_deviation);
+    }
+
+    Fault_counts faults;
+    for (uint8_t channel = 0; channel < header.Channel_count; channel++) {
+
+        Detect_channel_faults(samples, header.Record_count, channel, &faults);
+
+        printf("\nChannel %u\n", channel);
+
+        printf("Overvoltage faults:  %u\n", faults.overvoltage_count);
+        printf("Undervoltage faults: %u\n", faults.undervoltage_count);
+        printf("Sensor faults:       %u\n", faults.sensor_fault_count);
+        printf("Total faults:        %u\n", faults.total_fault_count);
     }
 
     fclose(data_file);

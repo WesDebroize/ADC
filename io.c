@@ -30,9 +30,23 @@ int header_checker(const char filename[], File_header *header) {
         fclose(data_file);
         return 0;
     }
-    //The file is opened, it's the correct size, it could read the header, magic number is correct
+    //Validating record count
+    fseek(data_file, 0, SEEK_END);
+
+    long file_size = ftell(data_file);
+    printf("File size is %ld\n", file_size);
+    long record_count_size = file_size - sizeof(File_header);// 64024 - 24
+    long real_record_count = record_count_size / sizeof(ADCBinaryRecords); // 64000/16
+
+    if (real_record_count != (long)header->Record_count) {
+        printf("Expected %u records, instead got %ld\n",header->Record_count,real_record_count);
+        fclose(data_file);
+        return 0;
+    }
+
+    //The file is opened, it could read the header, magic number is correct, record count is validated
     fclose(data_file);
-    printf("File_header read successfully, magic number is 0x%08X\n",header->Magic_number);
+    printf("File_header read successfully, magic number is 0x%08X, record count is %ld\n",header->Magic_number, real_record_count);
     return 1;
 }
 
@@ -41,8 +55,8 @@ int header_checker(const char filename[], File_header *header) {
 
 ADCSample *load_records(FILE *data_file, uint32_t record_count) {
 
-    //Size of *samples = size of one ADCSample (16 bytes)
-    ADCSample *samples = malloc(record_count * sizeof(*samples)); //4000 * 16 = 64000
+    //Size of *samples = size of one ADCSample
+    ADCSample *samples = malloc(record_count * sizeof(*samples));
 
     if (samples == NULL) {
         printf("Couldnt allocate memory for record_count\n");

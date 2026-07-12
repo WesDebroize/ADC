@@ -7,7 +7,7 @@
 #include <stdint.h> //Used to create fixed memory sized integer types
 
 
-//Defining ADCSample struct
+//Defining ADCBinaryRecords struct
 typedef struct __attribute__((packed)) { //Packed tells the compiler to not insert padding, otherwise the struct will be the wrong size
     float timestamp;            //4 bytes   Seconds from start
     uint8_t channel_id;         //1 byte    Ch NO. = 0,1,2,3
@@ -31,5 +31,24 @@ typedef struct {
 
 
 void voltage_conversion(ADCSample *sample, uint32_t record_count);
+
+typedef struct {
+    double mean_voltage;
+    double rms;
+    double minimum;
+    double maximum;
+    double standard_deviation;
+}Channel_stats;
+
+void Compute_channel_stats(ADCSample *sample, uint32_t record_count, uint8_t channel_id, Channel_stats *stats);
+
+typedef struct {
+    uint32_t overvoltage_count;
+    uint32_t undervoltage_count;
+    uint32_t sensor_fault_count;
+    uint32_t total_fault_count;
+} Fault_counts;
+
+void Detect_channel_faults(ADCSample *samples, uint32_t record_count, uint8_t channel_id, Fault_counts *faults);
 
 #endif //ADC_ADC_H
