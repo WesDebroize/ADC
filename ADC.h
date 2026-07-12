@@ -13,10 +13,10 @@ typedef struct __attribute__((packed)) { //Packed tells the compiler to not inse
     uint8_t channel_id;         //1 byte    Ch NO. = 0,1,2,3
     uint16_t raw_value;         //2 bytes   Range = 0-4095 (12-bit)
     int16_t temperature;        //2 bytes   In tenths of degree C
-    uint8_t status_flags;       //1 byte    0 = fault, 1 = OOR, rest reserved
+    uint8_t status_flags;       //1 byte    Bit 0 = Sensor fault, Bit 1 = OOR, rest reserved
     uint32_t sequence_number;   //4 bytes   Increments each record
     uint8_t reserved[2];        //2 bytes   Read + discard
-} ADCBinaryRecords;                    //16 bytes total
+} ADCBinaryRecords;             //16 bytes total
 
 //Defining new struct to store results for program
 typedef struct {

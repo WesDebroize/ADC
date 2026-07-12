@@ -4,18 +4,34 @@
 #include "ADC.h"
 #include "io.h"
 
-int main(void){
-    File_header header; //Variable to store the 24-byte file header
+int main(int argc, char *argv[]) {
 
-    //Calls header_checker function from io.c
-   if (header_checker("adc_sensor_log.bin", &header) == 0) {
-       printf("Header validation failed\n");
-       return EXIT_FAILURE;
-   }
-    FILE *data_file = fopen("adc_sensor_log.bin", "rb");
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <binary filename>\n", argv[0]);
+        return EXIT_FAILURE;
+    }
 
-    //Moves the file reading to start of the ADC records, from header to the first record
-    fseek(data_file, sizeof(File_header), SEEK_SET);
+    const char *input_filename = argv[1];
+
+    File_header header;
+
+    if (header_checker(input_filename, &header) == 0) {
+        printf("Header validation failed\n");
+        return EXIT_FAILURE;
+    }
+
+    FILE *data_file = fopen(input_filename, "rb");
+
+    if (data_file == NULL) {
+        perror("Could not reopen input file");
+        return EXIT_FAILURE;
+    }
+
+    if (fseek(data_file, sizeof(File_header), SEEK_SET) != 0) {
+        perror("Could not move to the first record");
+        fclose(data_file);
+        return EXIT_FAILURE;
+    }
 
     ADCSample *samples = load_records(data_file, header.Record_count);
     if (samples == NULL) {
@@ -45,11 +61,17 @@ int main(void){
     }
 
     Sequence_issue *sequence_issues = malloc(header.Record_count * sizeof(*sequence_issues));
-    uint32_t sequence_issue_count = Check_sampling_integrity(samples,header.Record_count, sequence_issues);
+
+    if (sequence_issues == NULL) {
+        printf("Could not allocate memory for sequence issues\n");
+        fclose(data_file);
+        free(samples);
+        return EXIT_FAILURE;
+    }
+    uint32_t sequence_issue_count = Check_sampling_integrity(samples, header.Record_count, sequence_issues);
 
     if (write_results_file("results.txt", &header, channel_stats, fault_counts, sequence_issues, sequence_issue_count) == 0) {
 
-        //The output file could not be opened.
         fclose(data_file);
         free(sequence_issues);
         free(samples);
