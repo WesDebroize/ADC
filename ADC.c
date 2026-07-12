@@ -7,7 +7,6 @@
 #include "ADC.h"
 #include "stats.h"
 #include <stdint.h>
-#include <stdlib.h>
 
 #define VREF 3.3
 

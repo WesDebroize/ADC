@@ -7,9 +7,9 @@
 
 #include "ADC.h"
 #include <stdio.h>
-#include <stdint.h> //used for setting valuable memory sizes with uint_t
+#include <stdint.h>
 #define MAGIC_NUMBER 0xADC1BEEF
-//Defining Header struct
+
 typedef struct __attribute__((packed)){
     uint32_t Magic_number;              //4 bytes   0xADC1BEEF — validate this first
     uint16_t File_version;              //2 bytes   Always 1
@@ -19,9 +19,16 @@ typedef struct __attribute__((packed)){
     uint8_t reserved[8];                //8 bytes   Read + Discard
 } File_header;                          //24 bytes total
 
-
 int header_checker(const char filename[], File_header *header);
 
 ADCSample *load_records(FILE *data_file, uint32_t record_count);
+
+int write_results_file(
+        char filename[],
+        File_header *header,
+        Channel_stats *channel_stats,
+        Fault_counts *fault_counts,
+        Sequence_issue *sequence_issues,
+        uint32_t sequence_issue_count);
 
 #endif //ADC_IO_H

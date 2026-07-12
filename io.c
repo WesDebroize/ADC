@@ -13,23 +13,20 @@ int header_checker(const char filename[], File_header *header) {
         printf("File couldnt open %s\n", filename); //Returns NULL if file couldnt be opened
         return 0;
     }
-    /*
-     Reads one 24-byte header (size of io_header) from the data_file and stores it into the
-     io_header structure pointed to by header
 
-     Didnt use &header as that would be the address of the pointer, not the header struct
-     */
     if (fread(header, sizeof(File_header), 1, data_file) != 1) {  //checks that one complete io_header was read from the file
         printf("Couldnt read File_header\n");
         fclose(data_file);
         return 0;
     }
+
     //Checking magic number is 0xADC1BEEF
     if (header->Magic_number!= MAGIC_NUMBER) {
         printf("Expected 0x%08X, instead got 0x%08X\n",MAGIC_NUMBER,header->Magic_number); //%08X converts the integer to hexidecimal to 8 digits
         fclose(data_file);
         return 0;
     }
+
     //Validating record count
     fseek(data_file, 0, SEEK_END);
 
@@ -90,4 +87,76 @@ ADCSample *load_records(FILE *data_file, uint32_t record_count) {
 
     }
     return samples;
+}
+
+int write_results_file(char filename[], File_header *header, Channel_stats *channel_stats, Fault_counts *fault_counts, Sequence_issue *sequence_issues, uint32_t sequence_issue_count) {
+
+    FILE *results_file = fopen(filename, "w");
+
+    if (results_file == NULL) {
+        printf("Couldnt open %s for writing\n", filename);
+        return 0;
+    }
+
+    fprintf(results_file,"ADC SENSOR DATA ANALYSIS RESULTS\n");
+    fprintf(results_file,"================================\n");
+
+
+    Channel_stats *stats = channel_stats;
+    Fault_counts *faults = fault_counts;
+
+    for (uint16_t channel = 0; channel < header->Channel_count; channel++) {
+
+        fprintf(results_file,"CHANNEL %u\n", channel);
+        fprintf(results_file,"---------\n");
+        fprintf(results_file,"Mean voltage:             %.6f V\n", stats->mean_voltage);
+        fprintf(results_file,"Minimum voltage:          %.6f V\n", stats->minimum);
+        fprintf(results_file,"Maximum voltage:          %.6f V\n", stats->maximum);
+        fprintf(results_file,"RMS voltage:              %.6f V\n", stats->rms);
+        fprintf(results_file,"Standard deviation:       %.6f V\n", stats->standard_deviation);
+        fprintf(results_file, "Overvoltage faults:      %u\n", faults->overvoltage_count);
+        fprintf(results_file, "Undervoltage faults:     %u\n", faults->undervoltage_count);
+        fprintf(results_file, "Sensor faults:           %u\n", faults->sensor_fault_count);
+        fprintf(results_file,"Total faulted samples:    %u\n\n", faults->total_fault_count);
+
+        stats++;
+        faults++;
+    }
+
+    //Sampling-integrity section
+
+    fprintf(results_file,"SAMPLING INTEGRITY\n");
+    fprintf(results_file,"------------------\n");
+
+    uint32_t gap_count = 0;
+    uint32_t missing_record_count = 0;
+    uint32_t out_of_order_count = 0;
+
+    const Sequence_issue *issue = sequence_issues;
+
+    if (sequence_issue_count == 0) {
+        fprintf(results_file,"No sequence number problems found.\n");
+    }
+
+    for (uint32_t i = 0; i < sequence_issue_count; i++) {
+
+        if (issue->missing_count > 0) {
+            fprintf(results_file,"Gap between sequence %u and %u: %u records missing\n", issue->last_sequence, issue->current_sequence, issue->missing_count);
+            gap_count++;
+            missing_record_count += issue->missing_count;
+        }
+        else {
+            fprintf(results_file,"Out-of-order sequence: %u followed by %u\n", issue->last_sequence, issue->current_sequence);
+            out_of_order_count++;
+        }
+        issue++;
+    }
+
+    //integrity summary.
+    fprintf(results_file,"\nSequence gaps:           %u\n", gap_count);
+    fprintf(results_file,"Missing records:           %u\n", missing_record_count);
+    fprintf(results_file, "Out-of-order records:    %u\n", out_of_order_count);
+
+    fclose(results_file);
+    return 1;
 }
